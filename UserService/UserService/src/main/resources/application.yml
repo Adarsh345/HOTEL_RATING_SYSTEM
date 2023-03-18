@@ -1,0 +1,20 @@
+server:
+  port: 8081
+
+spring:
+  data:
+    mongodb:
+      uri: mongodb://localhost:27017
+      database: USER_SERVICE
+  application:
+    name: USER-SERVICE
+
+  config:
+    import: optional:configserver:http://localhost:8086/
+
+
+    # to active profile
+ # profiles:
+ #  active: prod
+
+

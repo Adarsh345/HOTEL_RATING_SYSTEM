@@ -1,0 +1,43 @@
+server:
+  port: 8085
+
+spring:
+  application:
+    name: API-GATEWAY
+
+  cloud:
+    gateway:
+      routes:
+        - id: USER-SERVICE
+          uri: lb://USER-SERVICE
+          predicates:
+            - Path=/users/**
+        - id: HOTEL-SERVICE
+          uri: lb://HOTEL-SERVICE
+          predicates:
+            - Path=/hotel/**
+        - id: RATING-SERVICE
+          uri: lb://RATING-SERVICE
+          predicates:
+            - Path=/ratings/**
+              
+              
+            #  If you want to access other urls from same service you have to specifiy
+            #  url in api gateway
+            #  method 1.
+            #- Path=/ratings/**,/staffs  => 1 way
+            #- path= /**
+
+
+
+
+
+
+eureka:
+  instance:
+    prefer-ip-address: true
+  client:
+    fetch-registry: true
+    register-with-eureka : true
+    service-url:
+      defaultZone: http://localhost:8084/eureka
