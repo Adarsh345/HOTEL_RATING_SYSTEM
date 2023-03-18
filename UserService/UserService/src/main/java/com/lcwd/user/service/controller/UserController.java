@@ -28,19 +28,21 @@ public class UserController {
     }
 
     @GetMapping("/{userId}")
-    @CircuitBreaker(name ="ratingHotelBreaker" )
+    @CircuitBreaker(name ="ratingHotelBreaker" , fallbackMethod = "ratingHotelFallBack")
+
     public ResponseEntity<User> getSingleUser(@PathVariable String userId){
        User user =  userService.getUser(userId);
        return ResponseEntity.ok(user);
     }
 
     // CREATING FALLBACK METHOD FOR CIRCUIT BREAKER
-     public ResponseEntity<User>  ratingHotelBreaker(String userId, Exception exception){
+     public ResponseEntity<User>  ratingHotelFallBack(String userId, Exception exception){
         logger.info("Fallback is executed because service is down :", exception.getMessage());
        User  user =  User.builder()
                .name("Dummy")
                .email("dummy101gmail.com")
                .about("This user is Dummy because service is  down")
+               .id("123553")
                .build();
 
         return new ResponseEntity<>(user , HttpStatus.OK);
