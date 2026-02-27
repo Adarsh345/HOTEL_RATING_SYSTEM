@@ -1,0 +1,124 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: hotel-service
+  namespace: hotel-rating
+spec:
+  selector:
+    app: hotel-service
+  ports:
+    - port: 8082
+      targetPort: 8082
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: hotel-service
+  namespace: hotel-rating
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: hotel-service
+  template:
+    metadata:
+      labels:
+        app: hotel-service
+    spec:
+      containers:
+        - name: hotel-service
+          image: hotel-rating/hotel-service:latest
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: SPRING_DATA_MONGODB_DATABASE
+              value: HOTEL_SERVICE
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://service-registry:8084/eureka
+          ports:
+            - containerPort: 8082
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: rating-service
+  namespace: hotel-rating
+spec:
+  selector:
+    app: rating-service
+  ports:
+    - port: 8083
+      targetPort: 8083
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rating-service
+  namespace: hotel-rating
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rating-service
+  template:
+    metadata:
+      labels:
+        app: rating-service
+    spec:
+      containers:
+        - name: rating-service
+          image: hotel-rating/rating-service:latest
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: SPRING_DATA_MONGODB_DATABASE
+              value: RATING_SERVICE
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://service-registry:8084/eureka
+          ports:
+            - containerPort: 8083
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: user-service
+  namespace: hotel-rating
+spec:
+  selector:
+    app: user-service
+  ports:
+    - port: 8081
+      targetPort: 8081
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: user-service
+  namespace: hotel-rating
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: user-service
+  template:
+    metadata:
+      labels:
+        app: user-service
+    spec:
+      containers:
+        - name: user-service
+          image: hotel-rating/user-service:latest
+          imagePullPolicy: Always
+          env:
+            - name: SPRING_DATA_MONGODB_URI
+              value: mongodb://mongo:27017
+            - name: SPRING_DATA_MONGODB_DATABASE
+              value: USER_SERVICE
+            - name: SPRING_CONFIG_IMPORT
+              value: optional:configserver:http://config-server:8086/
+            - name: EUREKA_CLIENT_SERVICEURL_DEFAULTZONE
+              value: http://service-registry:8084/eureka
+          ports:
+            - containerPort: 8081
