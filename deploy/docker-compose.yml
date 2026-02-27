@@ -1,0 +1,98 @@
+version: "3.9"
+
+services:
+  service-registry:
+    build:
+      context: ../ServiceRegistry/ServiceRegistry
+    image: hotel-rating/service-registry:latest
+    container_name: service-registry
+    environment:
+      EUREKA_INSTANCE_HOSTNAME: service-registry
+    ports:
+      - "8084:8084"
+
+  config-server:
+    build:
+      context: ../ConfigServer/ConfigServer
+    image: hotel-rating/config-server:latest
+    container_name: config-server
+    depends_on:
+      - service-registry
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8084/eureka
+      SPRING_CLOUD_CONFIG_SERVER_GIT_URI: ${CONFIG_REPO_URI:-https://github.com/Adarsh345/microservice-tutorial-config}
+    ports:
+      - "8086:8086"
+
+  hotel-service:
+    build:
+      context: ../HotelService/HotelService
+    image: hotel-rating/hotel-service:latest
+    container_name: hotel-service
+    depends_on:
+      - service-registry
+      - mongo
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017
+      SPRING_DATA_MONGODB_DATABASE: HOTEL_SERVICE
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8084/eureka
+    ports:
+      - "8082:8082"
+
+  rating-service:
+    build:
+      context: ../RatingService/RatingService
+    image: hotel-rating/rating-service:latest
+    container_name: rating-service
+    depends_on:
+      - service-registry
+      - mongo
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017
+      SPRING_DATA_MONGODB_DATABASE: RATING_SERVICE
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8084/eureka
+    ports:
+      - "8083:8083"
+
+  user-service:
+    build:
+      context: ../UserService/UserService
+    image: hotel-rating/user-service:latest
+    container_name: user-service
+    depends_on:
+      - service-registry
+      - config-server
+      - mongo
+    environment:
+      SPRING_DATA_MONGODB_URI: mongodb://mongo:27017
+      SPRING_DATA_MONGODB_DATABASE: USER_SERVICE
+      SPRING_CONFIG_IMPORT: optional:configserver:http://config-server:8086/
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8084/eureka
+    ports:
+      - "8081:8081"
+
+  api-gateway:
+    build:
+      context: ../ApiGateway/ApiGateway
+    image: hotel-rating/api-gateway:latest
+    container_name: api-gateway
+    depends_on:
+      - service-registry
+      - user-service
+      - hotel-service
+      - rating-service
+    environment:
+      EUREKA_CLIENT_SERVICEURL_DEFAULTZONE: http://service-registry:8084/eureka
+    ports:
+      - "8085:8085"
+
+  mongo:
+    image: mongo:7
+    container_name: hotel-rating-mongo
+    volumes:
+      - mongo-data:/data/db
+    ports:
+      - "27017:27017"
+
+volumes:
+  mongo-data:
